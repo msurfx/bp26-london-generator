@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BP26 London Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* layout: two-column app shell — controls left, circular canvas preview right; stacks to one column under 760px */
+  :root{
+    --bg:#05060c;
+    --surface:#0e1226;
+    --surface-2:#141a35;
+    --ink:#f5f7ff;
+    --ink-muted:#9aa3c7;
+    --purple:#9945ff;
+    --magenta:#dc1fff;
+    --green:#14f195;
+    --cyan:#2ee6ff;
+    --border:#232a45;
+    --font-ui:'Rajdhani',system-ui,sans-serif;
+    --font-display:'Anton',system-ui,sans-serif;
+    --font-body:-apple-system,"Segoe UI",system-ui,sans-serif;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    padding-inline:20px;
+    padding-block:28px;
+    min-height:100%;
+  }
+  .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+
+  header{display:flex;flex-direction:column;gap:4px;text-align:center}
+  .eyebrow{
+    font-family:var(--font-ui);
+    font-weight:600;
+    letter-spacing:3px;
+    font-size:12px;
+    color:var(--green);
+    text-transform:uppercase;
+  }
+  h1{
+    margin:0;
+    font-family:var(--font-display);
+    font-weight:400;
+    font-size:clamp(28px,5vw,44px);
+    letter-spacing:1px;
+    text-transform:uppercase;
+    background:linear-gradient(90deg,var(--magenta),var(--purple) 50%,var(--green));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    text-wrap:balance;
+  }
+  .sub{color:var(--ink-muted);font-size:14px;max-width:46ch;margin:4px auto 0}
+
+  .app{
+    display:grid;
+    grid-template-columns:minmax(260px,340px) 1fr;
+    gap:28px;
+    align-items:start;
+  }
+  @media (max-width:760px){
+    .app{grid-template-columns:1fr}
+  }
+
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .field{display:flex;flex-direction:column;gap:8px}
+  label{
+    font-family:var(--font-ui);
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+  }
+
+  .dropzone{
+    border:1.5px dashed var(--border);
+    border-radius:12px;
+    background:var(--surface-2);
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+    min-width:0;
+  }
+  .dropzone:hover,.dropzone.drag{
+    border-color:var(--purple);
+    background:#171d3e;
+  }
+  .dropzone svg{width:28px;height:28px;color:var(--purple)}
+  .dropzone .hint{font-size:12px;color:var(--ink-muted)}
+  .dropzone .filename{font-size:13px;color:var(--ink);font-weight:600;word-break:break-all}
+  #fileInput{display:none}
+
+  .text-input{
+    width:100%;
+    padding:11px 14px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--ink);
+    font-family:var(--font-ui);
+    font-weight:600;
+    letter-spacing:0.5px;
+    font-size:16px;
+    text-transform:uppercase;
+  }
+  .text-input::placeholder{color:var(--ink-muted);text-transform:none;font-weight:500}
+  .text-input:focus{outline:2px solid var(--purple);outline-offset:1px}
+  .char-count{font-size:11px;color:var(--ink-muted);text-align:right}
+
+  button.primary{
+    font-family:var(--font-ui);
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:#05060c;
+    background:linear-gradient(90deg,var(--magenta),var(--purple) 55%,var(--green));
+    border:none;
+    border-radius:10px;
+    padding:13px 18px;
+    cursor:pointer;
+  }
+  button.primary:active{transform:translateY(1px)}
+  button.primary:disabled{opacity:.5;cursor:not-allowed}
+
+  button.ghost{
+    font-family:var(--font-ui);
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:transparent;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 14px;
+    cursor:pointer;
+  }
+  button.ghost:hover{border-color:var(--purple)}
+
+  .preview-panel{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .canvas-shell{
+    width:100%;
+    max-width:420px;
+    aspect-ratio:1/1;
+    position:relative;
+  }
+  canvas{
+    width:100%;
+    height:100%;
+    display:block;
+    border-radius:16px;
+  }
+  .status{
+    font-family:var(--font-ui);
+    font-size:12px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .status .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+  .save-steps{
+    width:100%;
+    max-width:420px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .save-steps .label{
+    font-family:var(--font-ui);font-weight:600;font-size:12px;letter-spacing:1px;
+    text-transform:uppercase;color:var(--green);
+  }
+  .save-steps p{margin:0;font-size:13px;color:var(--ink-muted);line-height:1.5}
+  .save-steps .row{display:flex;gap:10px;flex-wrap:wrap}
+
+  footer{text-align:center;color:var(--ink-muted);font-size:12px}
+  footer a{color:var(--ink-muted)}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Solana Hacker House · London</div>
+    <h1>BP26 London Generator</h1>
+    <p class="sub">Upload a photo, drop in your handle, and get a cyberpunk-utopic Breakpoint 2026 pfp — ready for X.</p>
+  </header>
+
+  <div class="app">
+    <div class="panel">
+      <div class="field">
+        <label for="fileInput">Your photo</label>
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload your photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5M7 9l5-5 5 5M12 4v12"/></svg>
+          <div class="filename" id="filename">Tap to choose, or paste (Ctrl/Cmd+V)</div>
+          <div class="hint">JPG or PNG, square-ish photos crop best</div>
+        </div>
+        <input id="fileInput" type="file" accept="image/*">
+      </div>
+
+      <div class="field">
+        <label for="handleInput">Your handle</label>
+        <input id="handleInput" class="text-input" type="text" maxlength="16" placeholder="e.g. MOONSURF" value="MOONSURF">
+        <div class="char-count"><span id="charCount">9</span>/16</div>
+      </div>
+
+      <button class="primary" id="generateBtn">Generate pfp</button>
+      <button class="ghost" id="resetBtn">Reset to example</button>
+    </div>
+
+    <div class="panel preview-panel">
+      <div class="canvas-shell">
+        <canvas id="canvas" width="1000" height="1000" aria-label="Generated BP26 London profile picture"></canvas>
+      </div>
+      <div class="status"><span class="dot"></span><span id="statusText">Showing example — upload your photo above</span></div>
+
+      <div class="save-steps">
+        <div class="label">Save it to X</div>
+        <p>1. Right-click (desktop) or press and hold (mobile) the image above and choose <strong>Save image</strong>.</p>
+        <p>2. On X, go to your profile → <strong>Edit profile</strong> → tap your avatar → upload the saved image.</p>
+        <div class="row">
+          <button class="ghost" id="copyBtn">Copy image instead</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Fan-made for Breakpoint 2026 · London. Not an official Solana Foundation product.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var cx = W/2, cy = H/2;
+  var circleR = W*0.46;
+
+  var COLORS = {
+    bg: '#05060c',
+    void2: '#0b0f1f',
+    purple: '#9945ff',
+    magenta: '#dc1fff',
+    green: '#14f195',
+    cyan: '#2ee6ff',
+    ink: '#f5f7ff'
+  };
+
+  var uploadedImg = null;       // the raw photo the user picked, shown instantly as a preview
+  var uploadedDataUrl = null;   // same photo as a data: URL, sent to the AI endpoint
+  var aiImg = null;             // the AI-generated duotone/glitch portrait, once it comes back
+  var handle = 'MOONSURF';
+  var generating = false;
+
+  var fileInput = document.getElementById('fileInput');
+  var dropzone = document.getElementById('dropzone');
+  var filenameEl = document.getElementById('filename');
+  var handleInput = document.getElementById('handleInput');
+  var charCount = document.getElementById('charCount');
+  var statusText = document.getElementById('statusText');
+  var generateBtn = document.getElementById('generateBtn');
+  var resetBtn = document.getElementById('resetBtn');
+  var copyBtn = document.getElementById('copyBtn');
+
+  dropzone.addEventListener('click', function(){ fileInput.click(); });
+  dropzone.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ fileInput.click(); } });
+  dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('drag'); });
+  dropzone.addEventListener('drop', function(e){
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', function(){
+    if(fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function tryHandlePaste(items){
+    if(!items) return false;
+    for(var i=0;i<items.length;i++){
+      if(items[i].type && items[i].type.indexOf('image') === 0){
+        var file = items[i].getAsFile();
+        if(file){ handleFile(file); return true; }
+      }
+    }
+    return false;
+  }
+
+  // paste anywhere on the page
+  document.addEventListener('paste', function(e){
+    var items = (e.clipboardData || window.clipboardData || {}).items;
+    if(tryHandlePaste(items)){
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+    }
+  });
+
+  // focusing the dropzone and pasting feels most natural, so hint at it visually
+  dropzone.addEventListener('focus', function(){
+    statusText.textContent = 'Ready to paste — Ctrl/Cmd+V, or click to choose a file';
+  });
+
+  function handleFile(file){
+    if(!file.type.startsWith('image/')) return;
+    filenameEl.textContent = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        uploadedImg = img;
+        uploadedDataUrl = e.target.result;
+        aiImg = null; // a new photo invalidates any previous AI generation
+        statusText.textContent = 'Photo loaded — hit Generate';
+        draw();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  handleInput.addEventListener('input', function(){
+    handleInput.value = handleInput.value.toUpperCase().replace(/[^A-Z0-9_]/g,'');
+    charCount.textContent = handleInput.value.length;
+  });
+
+  generateBtn.addEventListener('click', async function(){
+    if(generating) return;
+    handle = handleInput.value.trim() || 'MOONSURF';
+
+    if(!uploadedDataUrl){
+      // no photo yet — just render the placeholder template with the handle
+      draw();
+      statusText.textContent = 'Generated with example portrait — upload your own above';
+      return;
+    }
+
+    generating = true;
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating…';
+    statusText.textContent = 'Sending to the BP26 generator — this takes a few seconds';
+    draw(); // show the placeholder/uploaded crop immediately while we wait
+
+    try{
+      var res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: uploadedDataUrl })
+      });
+      var data = await res.json();
+
+      if(!res.ok){
+        throw new Error(data && data.error ? data.error : ('Server error (' + res.status + ')'));
+      }
+      if(!data.image){
+        throw new Error('No image came back from the generator');
+      }
+
+      var out = new Image();
+      out.onload = function(){
+        aiImg = out;
+        draw();
+        statusText.textContent = 'Generated';
+      };
+      out.onerror = function(){
+        throw new Error('Got a response but could not load the generated image');
+      };
+      out.src = data.image;
+
+    }catch(err){
+      console.error(err);
+      // fall back to the local canvas-only treatment so the page still produces something
+      aiImg = null;
+      draw();
+      statusText.textContent = 'AI pass unavailable (' + err.message + ') — showing local-only version';
+    }finally{
+      generating = false;
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'Generate pfp';
+    }
+  });
+
+  resetBtn.addEventListener('click', function(){
+    uploadedImg = null;
+    uploadedDataUrl = null;
+    aiImg = null;
+    handleInput.value = 'MOONSURF';
+    handle = 'MOONSURF';
+    charCount.textContent = '9';
+    filenameEl.textContent = 'Tap to choose a photo';
+    statusText.textContent = 'Showing example — upload your photo above';
+    draw();
+  });
+
+  copyBtn.addEventListener('click', function(){
+    canvas.toBlob(function(blob){
+      if(!blob) return;
+      if(navigator.clipboard && window.ClipboardItem){
+        navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(function(){
+          copyBtn.textContent = 'Copied!';
+          setTimeout(function(){ copyBtn.textContent = 'Copy image instead'; }, 1800);
+        }).catch(function(){
+          copyBtn.textContent = 'Copy not supported — use right-click save';
+          setTimeout(function(){ copyBtn.textContent = 'Copy image instead'; }, 2200);
+        });
+      }
+    }, 'image/png');
+  });
+
+  // ---- drawing helpers ----
+
+  function fillTextSpaced(text, size, weight, family, color, baselineY, spacing){
+    ctx.save();
+    ctx.font = weight + ' ' + size + 'px ' + family;
+    ctx.textBaseline = 'alphabetic';
+    var widths = [];
+    var total = 0;
+    for(var i=0;i<text.length;i++){
+      var w = ctx.measureText(text[i]).width;
+      widths.push(w);
+      total += w + (i < text.length-1 ? spacing : 0);
+    }
+    var startX = cx - total/2;
+    ctx.fillStyle = color;
+    var x = startX;
+    for(var j=0;j<text.length;j++){
+      ctx.fillText(text[j], x, baselineY);
+      x += widths[j] + spacing;
+    }
+    ctx.restore();
+    return total;
+  }
+
+  function glitchLine(text, size, weight, family, baselineY, spacing, baseColor){
+    var halfH = size*0.62;
+    // magenta sliver, upper band, nudged right
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, baselineY-halfH, W, halfH*0.55);
+    ctx.clip();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.8;
+    fillTextSpacedAt(text, size, weight, family, COLORS.magenta, baselineY, spacing, 3, -1);
+    ctx.restore();
+
+    // cyan sliver, lower band, nudged left
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, baselineY-halfH*0.45, W, halfH);
+    ctx.clip();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.8;
+    fillTextSpacedAt(text, size, weight, family, COLORS.cyan, baselineY, spacing, -3, 1);
+    ctx.restore();
+
+    // real line on top
+    fillTextSpaced(text, size, weight, family, baseColor, baselineY, spacing);
+  }
+
+  function fillTextSpacedAt(text, size, weight, family, color, baselineY, spacing, dx, dy){
+    ctx.save();
+    ctx.font = weight + ' ' + size + 'px ' + family;
+    ctx.textBaseline = 'alphabetic';
+    var widths = [], total = 0;
+    for(var i=0;i<text.length;i++){
+      var w = ctx.measureText(text[i]).width;
+      widths.push(w);
+      total += w + (i < text.length-1 ? spacing : 0);
+    }
+    var startX = cx - total/2 + dx;
+    ctx.fillStyle = color;
+    var x = startX;
+    for(var j=0;j<text.length;j++){
+      ctx.fillText(text[j], x, baselineY+dy);
+      x += widths[j] + spacing;
+    }
+    ctx.restore();
+  }
+
+  function drawSkyline(){
+    ctx.save();
+    ctx.strokeStyle = 'rgba(153,69,255,0.55)';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = COLORS.void2;
+
+    var baseY = cy + circleR*0.78;
+
+    // Big Ben (left)
+    var bbX = cx - circleR*0.52;
+    ctx.beginPath();
+    ctx.rect(bbX-16, baseY-150, 32, 150);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bbX-16, baseY-150);
+    ctx.lineTo(bbX, baseY-185);
+    ctx.lineTo(bbX+16, baseY-150);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(bbX, baseY-168, 9, 0, Math.PI*2);
+    ctx.fillStyle = COLORS.cyan;
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = COLORS.void2;
+
+    // The Shard (center)
+    ctx.beginPath();
+    ctx.moveTo(cx-34, baseY);
+    ctx.lineTo(cx, baseY-230);
+    ctx.lineTo(cx+34, baseY);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // The Gherkin (right)
+    var gX = cx + circleR*0.5;
+    ctx.beginPath();
+    ctx.moveTo(gX-26, baseY);
+    ctx.quadraticCurveTo(gX-26, baseY-150, gX, baseY-175);
+    ctx.quadraticCurveTo(gX+26, baseY-150, gX+26, baseY);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // low rooftops filler
+    ctx.globalAlpha = 0.6;
+    for(var i=0;i<7;i++){
+      var rx = cx - circleR*0.95 + i*(circleR*1.9/6);
+      var rh = 40 + (i%3)*26;
+      ctx.fillRect(rx, baseY-rh, circleR*1.9/6-6, rh);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawSolanaMark(x, y, s){
+    ctx.save();
+    ctx.translate(x,y);
+    var grad = ctx.createLinearGradient(-s,0,s,0);
+    grad.addColorStop(0, COLORS.magenta);
+    grad.addColorStop(0.5, COLORS.purple);
+    grad.addColorStop(1, COLORS.green);
+    ctx.fillStyle = grad;
+    for(var i=0;i<3;i++){
+      var yy = -s*0.5 + i*s*0.5;
+      ctx.beginPath();
+      ctx.moveTo(-s*0.9, yy);
+      ctx.lineTo(s*0.6, yy);
+      ctx.lineTo(s*0.9, yy+s*0.22);
+      ctx.lineTo(-s*0.6, yy+s*0.22);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawPortrait(img){
+    // cover-fit crop into the circle
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    var scale = Math.max((circleR*2)/iw, (circleR*2)/ih);
+    var dw = iw*scale, dh = ih*scale;
+    var dx = cx - dw/2, dy = cy - dh/2 + circleR*0.06;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, circleR, 0, Math.PI*2);
+    ctx.clip();
+
+    ctx.filter = 'contrast(1.18) saturate(1.35) brightness(0.92) hue-rotate(-6deg)';
+
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.22;
+    ctx.save(); ctx.translate(-3,-2); ctx.fillStyle = COLORS.magenta;
+    ctx.drawImage(img, dx, dy, dw, dh); ctx.restore();
+    ctx.save(); ctx.translate(3,2);
+    ctx.drawImage(img, dx, dy, dw, dh); ctx.restore();
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.filter = 'none';
+
+    // bottom vignette so the skyline/text stay legible
+    var vg = ctx.createLinearGradient(0, cy+circleR*0.1, 0, cy+circleR);
+    vg.addColorStop(0, 'rgba(5,6,12,0)');
+    vg.addColorStop(1, 'rgba(5,6,12,0.85)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(cx-circleR, cy-circleR, circleR*2, circleR*2);
+
+    ctx.restore();
+  }
+
+  function drawAiPortrait(img){
+    // the AI pass already did the duotone + datamosh work — just cover-fit it into the circle
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    var scale = Math.max((circleR*2)/iw, (circleR*2)/ih);
+    var dw = iw*scale, dh = ih*scale;
+    var dx = cx - dw/2, dy = cy - dh/2 + circleR*0.06;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, circleR, 0, Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(img, dx, dy, dw, dh);
+
+    // light bottom vignette so headline/handle text stay legible over busy areas
+    var vg = ctx.createLinearGradient(0, cy+circleR*0.1, 0, cy+circleR);
+    vg.addColorStop(0, 'rgba(5,6,12,0)');
+    vg.addColorStop(1, 'rgba(5,6,12,0.7)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(cx-circleR, cy-circleR, circleR*2, circleR*2);
+    ctx.restore();
+  }
+
+  function drawPlaceholderPortrait(){
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, circleR, 0, Math.PI*2);
+    ctx.clip();
+    var g = ctx.createRadialGradient(cx, cy-circleR*0.1, circleR*0.1, cx, cy, circleR);
+    g.addColorStop(0, '#1a2140');
+    g.addColorStop(1, '#0a0e1e');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx-circleR, cy-circleR, circleR*2, circleR*2);
+
+    ctx.fillStyle = 'rgba(154,163,199,0.35)';
+    ctx.beginPath(); ctx.arc(cx, cy-circleR*0.12, circleR*0.32, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy+circleR*0.95, circleR*0.62, Math.PI, 0);
+    ctx.fill();
+
+    var vg = ctx.createLinearGradient(0, cy+circleR*0.1, 0, cy+circleR);
+    vg.addColorStop(0, 'rgba(5,6,12,0)');
+    vg.addColorStop(1, 'rgba(5,6,12,0.85)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(cx-circleR, cy-circleR, circleR*2, circleR*2);
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    // square backdrop
+    ctx.fillStyle = COLORS.bg;
+    ctx.fillRect(0,0,W,H);
+
+    // circle background glow (purple/magenta top, green/cyan bottom) — drawn clipped to circle
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, circleR, 0, Math.PI*2);
+    ctx.clip();
+    var bgGrad = ctx.createLinearGradient(0, cy-circleR, 0, cy+circleR);
+    bgGrad.addColorStop(0, '#1b0f33');
+    bgGrad.addColorStop(0.5, '#0c1430');
+    bgGrad.addColorStop(1, '#06241f');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(cx-circleR, cy-circleR, circleR*2, circleR*2);
+    drawSkyline();
+    ctx.restore();
+
+    // subject on top, still clipped to circle inside drawPortrait/drawPlaceholderPortrait
+    if(aiImg){ drawAiPortrait(aiImg); }
+    else if(uploadedImg){ drawPortrait(uploadedImg); }
+    else { drawPlaceholderPortrait(); }
+
+    // outer glow ring
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, circleR+3, 0, Math.PI*2);
+    ctx.lineWidth = 6;
+    var ringGrad = ctx.createLinearGradient(cx-circleR, cy, cx+circleR, cy);
+    ringGrad.addColorStop(0, COLORS.magenta);
+    ringGrad.addColorStop(0.5, COLORS.purple);
+    ringGrad.addColorStop(1, COLORS.green);
+    ctx.strokeStyle = ringGrad;
+    ctx.globalAlpha = 0.55;
+    ctx.stroke();
+    ctx.restore();
+
+    // headline text, inside circle near top
+    glitchLine('SOLANA BREAKPOINT 2026', W*0.034, '600', "'Rajdhani',sans-serif", cy-circleR*0.62, 2, COLORS.ink);
+    glitchLine('LONDON', W*0.085, '400', "'Anton',sans-serif", cy-circleR*0.44, 1, COLORS.ink);
+    glitchLine(handle, W*0.052, '400', "'Anton',sans-serif", cy-circleR*0.28, 1, COLORS.green);
+
+    // Solana marks, outside the circle, bottom corners
+    drawSolanaMark(W*0.09, H*0.93, 26);
+    drawSolanaMark(W*0.91, H*0.93, 26);
+  }
+
+  window.addEventListener('error', function(e){
+    statusText.textContent = 'Error: ' + (e.message || 'unknown');
+  });
+
+  if(document.fonts && document.fonts.ready){
+    document.fonts.load("400 60px 'Anton'");
+    document.fonts.load("600 40px 'Rajdhani'");
+    document.fonts.ready.then(draw);
+  }
+  draw();
+  window.addEventListener('load', draw);
+})();
+</script>
+
+</body>
+</html>
