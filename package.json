@@ -1,0 +1,10 @@
+{
+  "name": "bp26-london-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cyberpunk-utopic Solana Breakpoint 2026 (London) profile picture generator.",
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
