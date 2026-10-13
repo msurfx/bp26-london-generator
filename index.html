@@ -129,6 +129,30 @@
   .text-input:focus{outline:2px solid var(--purple);outline-offset:1px}
   .char-count{font-size:11px;color:var(--ink-muted);text-align:right}
 
+  .style-picker{display:flex;flex-direction:column;gap:8px}
+  .style-option{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    cursor:pointer;
+    text-align:left;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .style-option:hover{border-color:var(--purple)}
+  .style-option.active{border-color:var(--purple);background:#1a1333;box-shadow:0 0 0 1px var(--purple) inset}
+  .swatch{width:30px;height:30px;border-radius:50%;flex:none;border:1px solid rgba(255,255,255,0.15)}
+  .swatch-skyline{background:linear-gradient(135deg,var(--magenta),var(--purple) 55%,var(--green))}
+  .swatch-purple{background:radial-gradient(circle at 35% 35%,var(--purple),#1a0f33)}
+  .swatch-green{background:radial-gradient(circle at 35% 35%,var(--green),#0a2318)}
+  .style-name{font-family:var(--font-ui);font-weight:700;font-size:14px;letter-spacing:0.3px}
+  .style-hint{font-size:11px;color:var(--ink-muted);margin-left:auto;text-align:right;max-width:40%}
+  @media (max-width:420px){ .style-hint{display:none} }
+
   button.primary{
     font-family:var(--font-ui);
     font-weight:700;
@@ -240,6 +264,27 @@
         <div class="char-count"><span id="charCount">9</span>/16</div>
       </div>
 
+      <div class="field">
+        <label>Style</label>
+        <div class="style-picker" id="stylePicker" role="radiogroup" aria-label="Pick a style">
+          <button type="button" class="style-option active" data-style="neon-skyline" role="radio" aria-checked="true">
+            <span class="swatch swatch-skyline"></span>
+            <span class="style-name">Neon Skyline</span>
+            <span class="style-hint">Badge with name &amp; London skyline</span>
+          </button>
+          <button type="button" class="style-option" data-style="duotone-purple" role="radio" aria-checked="false">
+            <span class="swatch swatch-purple"></span>
+            <span class="style-name">Duotone Purple</span>
+            <span class="style-hint">Clean avatar, no text</span>
+          </button>
+          <button type="button" class="style-option" data-style="duotone-green" role="radio" aria-checked="false">
+            <span class="swatch swatch-green"></span>
+            <span class="style-name">Duotone Green</span>
+            <span class="style-hint">Clean avatar, no text</span>
+          </button>
+        </div>
+      </div>
+
       <button class="primary" id="generateBtn">Generate pfp</button>
       <button class="ghost" id="resetBtn">Reset to example</button>
     </div>
@@ -289,6 +334,16 @@
   var handle = 'MOONSURF';
   var generating = false;
 
+  // Three locked styles — must match the keys in api/generate.js's STYLES object.
+  // usesHandle: false means that template renders no text at all (see api/generate.js),
+  // so the handle field is disabled when picked, since it wouldn't do anything.
+  var STYLE_INFO = {
+    'neon-skyline':   { usesHandle: true },
+    'duotone-purple': { usesHandle: false },
+    'duotone-green':  { usesHandle: false }
+  };
+  var selectedStyle = 'neon-skyline';
+
   var fileInput = document.getElementById('fileInput');
   var dropzone = document.getElementById('dropzone');
   var filenameEl = document.getElementById('filename');
@@ -298,6 +353,25 @@
   var generateBtn = document.getElementById('generateBtn');
   var resetBtn = document.getElementById('resetBtn');
   var copyBtn = document.getElementById('copyBtn');
+  var stylePicker = document.getElementById('stylePicker');
+  var styleOptions = stylePicker ? Array.prototype.slice.call(stylePicker.querySelectorAll('.style-option')) : [];
+
+  function selectStyle(styleKey){
+    if(!STYLE_INFO[styleKey]) return;
+    selectedStyle = styleKey;
+    styleOptions.forEach(function(btn){
+      var active = btn.getAttribute('data-style') === styleKey;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+    var usesHandle = STYLE_INFO[styleKey].usesHandle;
+    handleInput.disabled = !usesHandle;
+    handleInput.parentElement.style.opacity = usesHandle ? '1' : '0.5';
+  }
+
+  styleOptions.forEach(function(btn){
+    btn.addEventListener('click', function(){ selectStyle(btn.getAttribute('data-style')); });
+  });
 
   dropzone.addEventListener('click', function(){ fileInput.click(); });
   dropzone.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ fileInput.click(); } });
@@ -381,7 +455,7 @@
       var res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: uploadedDataUrl })
+        body: JSON.stringify({ image: uploadedDataUrl, handle: handle, style: selectedStyle })
       });
       var data = await res.json();
 
@@ -444,74 +518,11 @@
   });
 
   // ---- drawing helpers ----
-
-  function fillTextSpaced(text, size, weight, family, color, baselineY, spacing){
-    ctx.save();
-    ctx.font = weight + ' ' + size + 'px ' + family;
-    ctx.textBaseline = 'alphabetic';
-    var widths = [];
-    var total = 0;
-    for(var i=0;i<text.length;i++){
-      var w = ctx.measureText(text[i]).width;
-      widths.push(w);
-      total += w + (i < text.length-1 ? spacing : 0);
-    }
-    var startX = cx - total/2;
-    ctx.fillStyle = color;
-    var x = startX;
-    for(var j=0;j<text.length;j++){
-      ctx.fillText(text[j], x, baselineY);
-      x += widths[j] + spacing;
-    }
-    ctx.restore();
-    return total;
-  }
-
-  function glitchLine(text, size, weight, family, baselineY, spacing, baseColor){
-    var halfH = size*0.62;
-    // magenta sliver, upper band, nudged right
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, baselineY-halfH, W, halfH*0.55);
-    ctx.clip();
-    ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.8;
-    fillTextSpacedAt(text, size, weight, family, COLORS.magenta, baselineY, spacing, 3, -1);
-    ctx.restore();
-
-    // cyan sliver, lower band, nudged left
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, baselineY-halfH*0.45, W, halfH);
-    ctx.clip();
-    ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.8;
-    fillTextSpacedAt(text, size, weight, family, COLORS.cyan, baselineY, spacing, -3, 1);
-    ctx.restore();
-
-    // real line on top
-    fillTextSpaced(text, size, weight, family, baseColor, baselineY, spacing);
-  }
-
-  function fillTextSpacedAt(text, size, weight, family, color, baselineY, spacing, dx, dy){
-    ctx.save();
-    ctx.font = weight + ' ' + size + 'px ' + family;
-    ctx.textBaseline = 'alphabetic';
-    var widths = [], total = 0;
-    for(var i=0;i<text.length;i++){
-      var w = ctx.measureText(text[i]).width;
-      widths.push(w);
-      total += w + (i < text.length-1 ? spacing : 0);
-    }
-    var startX = cx - total/2 + dx;
-    ctx.fillStyle = color;
-    var x = startX;
-    for(var j=0;j<text.length;j++){
-      ctx.fillText(text[j], x, baselineY+dy);
-      x += widths[j] + spacing;
-    }
-    ctx.restore();
-  }
+  // Text/logo compositing helpers were removed: the AI generation pass now renders
+  // the handle, headline, and Solana logomark directly into the image (see
+  // api/generate.js). Drawing a second, code-made version on top produced a visible
+  // mismatch against the AI art, so this canvas only does photo placement + circle
+  // crop + UI chrome now.
 
   function drawSkyline(){
     ctx.save();
@@ -565,23 +576,6 @@
       ctx.fillRect(rx, baseY-rh, circleR*1.9/6-6, rh);
     }
     ctx.globalAlpha = 1;
-    ctx.restore();
-  }
-
-  function drawSolanaMark(x, y, s, color){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.fillStyle = color || COLORS.ink; // plain white, matching the real BP26 speaker-card logo — not a gradient
-    for(var i=0;i<3;i++){
-      var yy = -s*0.5 + i*s*0.5;
-      ctx.beginPath();
-      ctx.moveTo(-s*0.9, yy);
-      ctx.lineTo(s*0.6, yy);
-      ctx.lineTo(s*0.9, yy+s*0.22);
-      ctx.lineTo(-s*0.6, yy+s*0.22);
-      ctx.closePath();
-      ctx.fill();
-    }
     ctx.restore();
   }
 
@@ -694,7 +688,8 @@
     else if(uploadedImg){ drawPortrait(uploadedImg); }
     else { drawPlaceholderPortrait(); }
 
-    // outer glow ring
+    // outer glow ring — purely decorative UI chrome around the circle, not part of the
+    // generated image content
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, circleR+3, 0, Math.PI*2);
@@ -708,46 +703,12 @@
     ctx.stroke();
     ctx.restore();
 
-    // --- text block: matches the real Breakpoint speaker-card hierarchy —
-    // big bold handle (the "name"), small purple eyebrow line beneath it (the "role"),
-    // bottom-left, clean type with NO glitch effect — only the AI photo glitches.
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, circleR, 0, Math.PI*2);
-    ctx.clip();
-
-    // dark scrim in the bottom-left corner so text reads regardless of what's behind it
-    var scrim = ctx.createRadialGradient(
-      cx-circleR*0.55, cy+circleR*0.6, 0,
-      cx-circleR*0.55, cy+circleR*0.6, circleR*1.3
-    );
-    scrim.addColorStop(0, 'rgba(3,3,8,0.92)');
-    scrim.addColorStop(0.6, 'rgba(3,3,8,0.55)');
-    scrim.addColorStop(1, 'rgba(3,3,8,0)');
-    ctx.fillStyle = scrim;
-    ctx.fillRect(cx-circleR, cy-circleR, circleR*2, circleR*2);
-
-    var textLeft = cx - circleR*0.78;
-    var handleBaseline = cy + circleR*0.56;
-    var eyebrowBaseline = handleBaseline + W*0.042;
-
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-
-    // handle — big, bold, clean (no RGB split)
-    ctx.font = "700 " + (W*0.072) + "px 'Anton',sans-serif";
-    ctx.fillStyle = COLORS.ink;
-    ctx.fillText(handle, textLeft, handleBaseline);
-
-    // eyebrow — small, purple, letter-spaced caps, clean
-    drawLetterSpaced('SOLANA BREAKPOINT 2026', textLeft, eyebrowBaseline, W*0.026, '600', "'Rajdhani',sans-serif", COLORS.purple, 1.5);
-    drawLetterSpaced('LONDON', textLeft, eyebrowBaseline + W*0.034, W*0.026, '600', "'Rajdhani',sans-serif", COLORS.purple, 1.5);
-
-    ctx.restore();
-
-    // single Solana mark, top-left — small, static, one color, matching the real brand's
-    // top-left logo placement instead of two decorative corner marks
-    drawSolanaMark(cx - circleR*0.74, cy - circleR*0.74, 20);
+    // No code-drawn text or logo anymore: once aiImg exists, the model has already
+    // rendered the handle, "SOLANA BREAKPOINT 2026 · LONDON", and the Solana logomark
+    // directly into the image (see api/generate.js buildPrompt). Before that — while
+    // showing the placeholder or a freshly-uploaded, not-yet-generated photo — the
+    // canvas intentionally stays clean, since that text/logo would just be a fake
+    // preview of something only the AI pass actually produces.
   }
 
   function drawLetterSpaced(text, x, baselineY, size, weight, family, color, spacing){
@@ -766,6 +727,8 @@
   window.addEventListener('error', function(e){
     statusText.textContent = 'Error: ' + (e.message || 'unknown');
   });
+
+  selectStyle(selectedStyle); // set initial active/disabled state to match the HTML default
 
   if(document.fonts && document.fonts.ready){
     document.fonts.load("400 60px 'Anton'");
