@@ -568,14 +568,10 @@
     ctx.restore();
   }
 
-  function drawSolanaMark(x, y, s){
+  function drawSolanaMark(x, y, s, color){
     ctx.save();
     ctx.translate(x,y);
-    var grad = ctx.createLinearGradient(-s,0,s,0);
-    grad.addColorStop(0, COLORS.magenta);
-    grad.addColorStop(0.5, COLORS.purple);
-    grad.addColorStop(1, COLORS.green);
-    ctx.fillStyle = grad;
+    ctx.fillStyle = color || COLORS.ink; // plain white, matching the real BP26 speaker-card logo — not a gradient
     for(var i=0;i<3;i++){
       var yy = -s*0.5 + i*s*0.5;
       ctx.beginPath();
@@ -712,14 +708,59 @@
     ctx.stroke();
     ctx.restore();
 
-    // headline text, inside circle near top
-    glitchLine('SOLANA BREAKPOINT 2026', W*0.034, '600', "'Rajdhani',sans-serif", cy-circleR*0.62, 2, COLORS.ink);
-    glitchLine('LONDON', W*0.085, '400', "'Anton',sans-serif", cy-circleR*0.44, 1, COLORS.ink);
-    glitchLine(handle, W*0.052, '400', "'Anton',sans-serif", cy-circleR*0.28, 1, COLORS.green);
+    // --- text block: matches the real Breakpoint speaker-card hierarchy —
+    // big bold handle (the "name"), small purple eyebrow line beneath it (the "role"),
+    // bottom-left, clean type with NO glitch effect — only the AI photo glitches.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, circleR, 0, Math.PI*2);
+    ctx.clip();
 
-    // Solana marks, outside the circle, bottom corners
-    drawSolanaMark(W*0.09, H*0.93, 26);
-    drawSolanaMark(W*0.91, H*0.93, 26);
+    // dark scrim in the bottom-left corner so text reads regardless of what's behind it
+    var scrim = ctx.createRadialGradient(
+      cx-circleR*0.55, cy+circleR*0.6, 0,
+      cx-circleR*0.55, cy+circleR*0.6, circleR*1.3
+    );
+    scrim.addColorStop(0, 'rgba(3,3,8,0.92)');
+    scrim.addColorStop(0.6, 'rgba(3,3,8,0.55)');
+    scrim.addColorStop(1, 'rgba(3,3,8,0)');
+    ctx.fillStyle = scrim;
+    ctx.fillRect(cx-circleR, cy-circleR, circleR*2, circleR*2);
+
+    var textLeft = cx - circleR*0.78;
+    var handleBaseline = cy + circleR*0.56;
+    var eyebrowBaseline = handleBaseline + W*0.042;
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    // handle — big, bold, clean (no RGB split)
+    ctx.font = "700 " + (W*0.072) + "px 'Anton',sans-serif";
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillText(handle, textLeft, handleBaseline);
+
+    // eyebrow — small, purple, letter-spaced caps, clean
+    drawLetterSpaced('SOLANA BREAKPOINT 2026', textLeft, eyebrowBaseline, W*0.026, '600', "'Rajdhani',sans-serif", COLORS.purple, 1.5);
+    drawLetterSpaced('LONDON', textLeft, eyebrowBaseline + W*0.034, W*0.026, '600', "'Rajdhani',sans-serif", COLORS.purple, 1.5);
+
+    ctx.restore();
+
+    // single Solana mark, top-left — small, static, one color, matching the real brand's
+    // top-left logo placement instead of two decorative corner marks
+    drawSolanaMark(cx - circleR*0.74, cy - circleR*0.74, 20);
+  }
+
+  function drawLetterSpaced(text, x, baselineY, size, weight, family, color, spacing){
+    ctx.save();
+    ctx.font = weight + ' ' + size + 'px ' + family;
+    ctx.fillStyle = color;
+    ctx.textBaseline = 'alphabetic';
+    var cursorX = x;
+    for(var i=0;i<text.length;i++){
+      ctx.fillText(text[i], cursorX, baselineY);
+      cursorX += ctx.measureText(text[i]).width + spacing;
+    }
+    ctx.restore();
   }
 
   window.addEventListener('error', function(e){
