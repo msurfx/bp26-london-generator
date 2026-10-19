@@ -6,5 +6,8 @@
   "description": "Cyberpunk-utopic Solana Breakpoint 2026 (London) profile picture generator.",
   "scripts": {
     "dev": "vercel dev"
+  },
+  "devDependencies": {
+    "dotenv": "^18.0.8"
   }
 }
