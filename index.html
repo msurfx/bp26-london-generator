@@ -579,10 +579,69 @@
     ctx.restore();
   }
 
+  function drawGlitchRing(ringCx, ringCy, r){
+    ctx.save();
+    var baseWidth = 6;
+    var colors = [COLORS.magenta, COLORS.purple, COLORS.green, COLORS.cyan];
+
+    // base ring, broken into ~22 arcs around the circle, each with its own small
+    // color, width, and radial jitter — and about a quarter of them skipped
+    // entirely, so the ring reads as interrupted rather than solid.
+    var segments = 22;
+    for(var i=0;i<segments;i++){
+      if(Math.random() < 0.22) continue; // gap — a piece of the ring just missing
+
+      var a0 = (i/segments) * Math.PI*2;
+      var a1 = ((i+0.72)/segments) * Math.PI*2; // slightly short of the next segment, leaving natural seams
+      var jitterR = (Math.random()-0.5) * 5;    // radial jitter — ring wobbles in/out
+      var jitterW = baseWidth + (Math.random()-0.5) * 4;
+      var color = colors[Math.floor(Math.random()*colors.length)];
+
+      ctx.beginPath();
+      ctx.arc(ringCx, ringCy, r + jitterR, a0, a1);
+      ctx.lineWidth = Math.max(1.5, jitterW);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.6 + Math.random()*0.3;
+      ctx.stroke();
+
+      // occasional RGB-split echo: a thin duplicate of this same arc, offset and
+      // in a different channel color, like chromatic aberration on the ring itself
+      if(Math.random() < 0.35){
+        ctx.beginPath();
+        ctx.arc(ringCx, ringCy, r + jitterR + (Math.random()<0.5?3:-3), a0, a1);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = colors[Math.floor(Math.random()*colors.length)];
+        ctx.globalAlpha = 0.4;
+        ctx.stroke();
+      }
+    }
+
+    // a couple of longer, thin "datamosh" radial streaks kicking outward from
+    // the ring at random points, echoing the pixel-dissolve look in the art itself
+    for(var s=0;s<4;s++){
+      var angle = Math.random() * Math.PI*2;
+      var streakLen = 10 + Math.random()*22;
+      var sx = ringCx + Math.cos(angle) * r;
+      var sy = ringCy + Math.sin(angle) * r;
+      var ex = ringCx + Math.cos(angle) * (r + streakLen);
+      var ey = ringCy + Math.sin(angle) * (r + streakLen);
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(ex, ey);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = colors[Math.floor(Math.random()*colors.length)];
+      ctx.globalAlpha = 0.5;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
   function drawPortrait(img){
     // cover-fit crop into the circle
     var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-    var scale = Math.max((circleR*2)/iw, (circleR*2)/ih);
+    // overscan so the downward nudge below never leaves a gap at the top of the circle
+    var scale = Math.max((circleR*2)/iw, (circleR*2)/ih) * 1.14;
     var dw = iw*scale, dh = ih*scale;
     var dx = cx - dw/2, dy = cy - dh/2 + circleR*0.06;
 
@@ -618,7 +677,10 @@
   function drawAiPortrait(img){
     // the AI pass already did the duotone + datamosh work — just cover-fit it into the circle
     var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-    var scale = Math.max((circleR*2)/iw, (circleR*2)/ih);
+    // overscan the cover-fit scale so the image still fully covers the circle's top edge
+    // after the downward nudge below — otherwise a sliver of the page backdrop (not the
+    // image's own background) shows through at the top of the circle.
+    var scale = Math.max((circleR*2)/iw, (circleR*2)/ih) * 1.14;
     var dw = iw*scale, dh = ih*scale;
     var dx = cx - dw/2, dy = cy - dh/2 + circleR*0.06;
 
@@ -688,20 +750,11 @@
     else if(uploadedImg){ drawPortrait(uploadedImg); }
     else { drawPlaceholderPortrait(); }
 
-    // outer glow ring — purely decorative UI chrome around the circle, not part of the
-    // generated image content
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, circleR+3, 0, Math.PI*2);
-    ctx.lineWidth = 6;
-    var ringGrad = ctx.createLinearGradient(cx-circleR, cy, cx+circleR, cy);
-    ringGrad.addColorStop(0, COLORS.magenta);
-    ringGrad.addColorStop(0.5, COLORS.purple);
-    ringGrad.addColorStop(1, COLORS.green);
-    ctx.strokeStyle = ringGrad;
-    ctx.globalAlpha = 0.55;
-    ctx.stroke();
-    ctx.restore();
+    // outer ring — UI chrome around the circle, not part of the generated image content.
+    // Deliberately glitched: broken segments with gaps, jittery radial/angular offsets,
+    // and RGB-split duplicate arcs — matches the glitch language of the generated art
+    // instead of reading as a clean, untouched gradient border.
+    drawGlitchRing(cx, cy, circleR+3);
 
     // No code-drawn text or logo anymore: once aiImg exists, the model has already
     // rendered the handle, "SOLANA BREAKPOINT 2026 · LONDON", and the Solana logomark
