@@ -581,65 +581,39 @@
 
   function drawGlitchRing(ringCx, ringCy, r){
     ctx.save();
-    var colors = [COLORS.magenta, COLORS.purple, COLORS.green, COLORS.cyan];
-
-    // continuous solid base ring — a smooth gradient stroke all the way round,
-    // so the ring reads as a real border rather than a loading-spinner dash pattern.
-    var baseGrad = ctx.createLinearGradient(ringCx-r, ringCy-r, ringCx+r, ringCy+r);
-    baseGrad.addColorStop(0, COLORS.purple);
-    baseGrad.addColorStop(0.5, COLORS.magenta);
-    baseGrad.addColorStop(1, COLORS.green);
-    ctx.beginPath();
-    ctx.arc(ringCx, ringCy, r, 0, Math.PI*2);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = baseGrad;
-    ctx.globalAlpha = 0.95;
-    ctx.stroke();
-
-    // sparse glitch accents on top of the solid ring — a handful of short arcs
-    // with RGB-split echoes and a couple of small radial "datamosh" streaks, so
-    // it reads as glitched-but-intact rather than literally broken apart.
-    var accents = 5;
-    for(var i=0;i<accents;i++){
-      var a0 = Math.random() * Math.PI*2;
-      var a1 = a0 + (0.06 + Math.random()*0.1);
-      var color = colors[Math.floor(Math.random()*colors.length)];
-      var jitterR = (Math.random()-0.5) * 4;
-
-      ctx.beginPath();
-      ctx.arc(ringCx, ringCy, r + jitterR, a0, a1);
-      ctx.lineWidth = 5 + Math.random()*3;
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.85;
-      ctx.stroke();
-
-      // RGB-split echo: thin duplicate arc, offset, different channel color
-      ctx.beginPath();
-      ctx.arc(ringCx, ringCy, r + jitterR + (Math.random()<0.5?3:-3), a0, a1);
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = colors[Math.floor(Math.random()*colors.length)];
-      ctx.globalAlpha = 0.5;
-      ctx.stroke();
+    // No continuous ring or stroke — only scattered edge-straddling glitch patches
+    // that make the circle edge look torn/dissolving rather than bordered.
+    var patchColors = [
+      [COLORS.magenta, COLORS.purple, COLORS.green],
+      [COLORS.purple, COLORS.cyan, COLORS.magenta],
+      [COLORS.green, COLORS.magenta, COLORS.cyan],
+    ];
+    var numPatches = 8 + Math.floor(Math.random() * 5); // 8–12
+    for(var i = 0; i < numPatches; i++){
+      var angle = Math.random() * Math.PI * 2;
+      var triplet = patchColors[Math.floor(Math.random() * patchColors.length)];
+      // tangent rotation at this angle, with small random wobble
+      var baseRot = angle + Math.PI / 2 + (Math.random() - 0.5) * 0.4;
+      // base position: straddle the circle edge (half inside, half outside)
+      var bx = ringCx + Math.cos(angle) * r;
+      var by = ringCy + Math.sin(angle) * r;
+      for(var c = 0; c < 3; c++){
+        var w = 1.5 + Math.random() * 2;        // thin bar width
+        var h = 4 + Math.random() * 6;          // 4–10px long
+        // slight RGB-split offset: each channel shifted a few px radially/tangentially
+        var radOff  = (c - 1) * (1.5 + Math.random() * 1.5);
+        var tangOff = (Math.random() - 0.5) * 3;
+        var px = bx + Math.cos(angle) * radOff + Math.cos(angle + Math.PI/2) * tangOff;
+        var py = by + Math.sin(angle) * radOff + Math.sin(angle + Math.PI/2) * tangOff;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(baseRot + (c - 1) * 0.08);
+        ctx.globalAlpha = 0.4 + Math.random() * 0.3;
+        ctx.fillStyle = triplet[c];
+        ctx.fillRect(-w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
     }
-
-    // a couple of short, thin "datamosh" radial streaks kicking outward from
-    // the ring, echoing the pixel-dissolve look in the art itself
-    for(var s=0;s<3;s++){
-      var angle = Math.random() * Math.PI*2;
-      var streakLen = 8 + Math.random()*16;
-      var sx = ringCx + Math.cos(angle) * r;
-      var sy = ringCy + Math.sin(angle) * r;
-      var ex = ringCx + Math.cos(angle) * (r + streakLen);
-      var ey = ringCy + Math.sin(angle) * (r + streakLen);
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(ex, ey);
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = colors[Math.floor(Math.random()*colors.length)];
-      ctx.globalAlpha = 0.5;
-      ctx.stroke();
-    }
-
     ctx.restore();
   }
 
@@ -760,7 +734,7 @@
     // Deliberately glitched: broken segments with gaps, jittery radial/angular offsets,
     // and RGB-split duplicate arcs — matches the glitch language of the generated art
     // instead of reading as a clean, untouched gradient border.
-    drawGlitchRing(cx, cy, circleR+3);
+    drawGlitchRing(cx, cy, circleR);
 
     // No code-drawn text or logo anymore: once aiImg exists, the model has already
     // rendered the handle, "SOLANA BREAKPOINT 2026 · LONDON", and the Solana logomark
