@@ -581,46 +581,52 @@
 
   function drawGlitchRing(ringCx, ringCy, r){
     ctx.save();
-    var baseWidth = 6;
     var colors = [COLORS.magenta, COLORS.purple, COLORS.green, COLORS.cyan];
 
-    // base ring, broken into ~22 arcs around the circle, each with its own small
-    // color, width, and radial jitter — and about a quarter of them skipped
-    // entirely, so the ring reads as interrupted rather than solid.
-    var segments = 22;
-    for(var i=0;i<segments;i++){
-      if(Math.random() < 0.22) continue; // gap — a piece of the ring just missing
+    // continuous solid base ring — a smooth gradient stroke all the way round,
+    // so the ring reads as a real border rather than a loading-spinner dash pattern.
+    var baseGrad = ctx.createLinearGradient(ringCx-r, ringCy-r, ringCx+r, ringCy+r);
+    baseGrad.addColorStop(0, COLORS.purple);
+    baseGrad.addColorStop(0.5, COLORS.magenta);
+    baseGrad.addColorStop(1, COLORS.green);
+    ctx.beginPath();
+    ctx.arc(ringCx, ringCy, r, 0, Math.PI*2);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = baseGrad;
+    ctx.globalAlpha = 0.95;
+    ctx.stroke();
 
-      var a0 = (i/segments) * Math.PI*2;
-      var a1 = ((i+0.72)/segments) * Math.PI*2; // slightly short of the next segment, leaving natural seams
-      var jitterR = (Math.random()-0.5) * 5;    // radial jitter — ring wobbles in/out
-      var jitterW = baseWidth + (Math.random()-0.5) * 4;
+    // sparse glitch accents on top of the solid ring — a handful of short arcs
+    // with RGB-split echoes and a couple of small radial "datamosh" streaks, so
+    // it reads as glitched-but-intact rather than literally broken apart.
+    var accents = 5;
+    for(var i=0;i<accents;i++){
+      var a0 = Math.random() * Math.PI*2;
+      var a1 = a0 + (0.06 + Math.random()*0.1);
       var color = colors[Math.floor(Math.random()*colors.length)];
+      var jitterR = (Math.random()-0.5) * 4;
 
       ctx.beginPath();
       ctx.arc(ringCx, ringCy, r + jitterR, a0, a1);
-      ctx.lineWidth = Math.max(1.5, jitterW);
+      ctx.lineWidth = 5 + Math.random()*3;
       ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.6 + Math.random()*0.3;
+      ctx.globalAlpha = 0.85;
       ctx.stroke();
 
-      // occasional RGB-split echo: a thin duplicate of this same arc, offset and
-      // in a different channel color, like chromatic aberration on the ring itself
-      if(Math.random() < 0.35){
-        ctx.beginPath();
-        ctx.arc(ringCx, ringCy, r + jitterR + (Math.random()<0.5?3:-3), a0, a1);
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = colors[Math.floor(Math.random()*colors.length)];
-        ctx.globalAlpha = 0.4;
-        ctx.stroke();
-      }
+      // RGB-split echo: thin duplicate arc, offset, different channel color
+      ctx.beginPath();
+      ctx.arc(ringCx, ringCy, r + jitterR + (Math.random()<0.5?3:-3), a0, a1);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = colors[Math.floor(Math.random()*colors.length)];
+      ctx.globalAlpha = 0.5;
+      ctx.stroke();
     }
 
-    // a couple of longer, thin "datamosh" radial streaks kicking outward from
-    // the ring at random points, echoing the pixel-dissolve look in the art itself
-    for(var s=0;s<4;s++){
+    // a couple of short, thin "datamosh" radial streaks kicking outward from
+    // the ring, echoing the pixel-dissolve look in the art itself
+    for(var s=0;s<3;s++){
       var angle = Math.random() * Math.PI*2;
-      var streakLen = 10 + Math.random()*22;
+      var streakLen = 8 + Math.random()*16;
       var sx = ringCx + Math.cos(angle) * r;
       var sy = ringCy + Math.sin(angle) * r;
       var ex = ringCx + Math.cos(angle) * (r + streakLen);
