@@ -288,14 +288,14 @@
     top:8%;
     left:-20px;
     width:380px;
-    opacity:0.40;
+    opacity:0.65;
     animation:gl-drift-left 28s ease-in-out infinite;
   }
   .gl-ambient-right{
     top:28%;
     right:-20px;
     width:400px;
-    opacity:0.38;
+    opacity:0.62;
     animation:gl-drift-right 34s ease-in-out infinite;
     animation-delay:-13s;
   }
@@ -324,7 +324,14 @@
     100%{transform:translate(0px,0px) rotate(4deg);       filter:none;            opacity:0.09}
   }
   @media (max-width:768px){
-    .gl-ambient{display:none}
+    .gl-ambient-right{display:none}
+    .gl-ambient-left{
+      width:200px;
+      top:4%;
+      left:50%;
+      transform:translateX(-50%);
+      opacity:0.60;
+    }
   }
 
   /* paste button row */
