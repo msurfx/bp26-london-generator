@@ -736,8 +736,8 @@
       var logoW = circleR * 2 * 0.22;
       var logoH = logoW * (96 / 520);
       var logoX = cx - logoW / 2;
-      // Vertically centered at cy - circleR*0.80 (near top of circle)
-      var logoY = (cy - circleR * 0.80) - logoH / 2;
+      // Top edge sits 0.14*circleR below the circle's topmost point — edge-gap symmetry with handle below
+      var logoY = cy - circleR + circleR * 0.14;
 
       ctx.drawImage(bp26Logo, logoX, logoY, logoW, logoH);
     }
@@ -754,9 +754,10 @@
         fontSize *= maxTextW / textW;
         ctx.font = '700 ' + fontSize + 'px "Rajdhani", "Arial Narrow", Arial, sans-serif';
       }
-      var textY = cy + circleR * 0.80;
+      // Bottom edge sits 0.14*circleR above the circle's bottommost point — edge-gap symmetry with logo above
+      var textY = cy + circleR - circleR * 0.14;
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.textBaseline = 'bottom';
       // cyan ghost (left/up)
       ctx.globalAlpha = 0.5;
       ctx.fillStyle = 'rgba(0,255,255,1)';
