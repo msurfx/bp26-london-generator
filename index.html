@@ -275,6 +275,83 @@
   .footer-credit{font-family:var(--font-ui);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#5a4a7a}
   .footer-credit a{color:#5a4a7a}
   .footer-credit a:hover{color:var(--purple)}
+
+  /* Glitch Labs fixed corner badge */
+  .gl-badge{
+    position:fixed;
+    top:16px;right:16px;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .gl-badge-icon{
+    width:40px;height:40px;
+    border-radius:8px;
+    opacity:0.85;
+    cursor:pointer;
+    flex:none;
+    display:block;
+    transition:opacity .15s;
+  }
+  .gl-badge:hover .gl-badge-icon,.gl-badge:active .gl-badge-icon{opacity:1}
+  .gl-badge-text{
+    font-family:var(--font-ui);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    opacity:0;
+    pointer-events:none;
+    user-select:none;
+  }
+  .gl-text-g{
+    background:linear-gradient(90deg,var(--magenta),var(--purple) 50%,var(--green));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .gl-text-l{color:#fff}
+  @keyframes gl-flicker-in{
+    0%  {opacity:0;transform:translateX(6px)}
+    12% {opacity:.85;transform:translateX(-1px)}
+    22% {opacity:.05;transform:translateX(2px)}
+    38% {opacity:.9;transform:translateX(-.5px)}
+    55% {opacity:.3;transform:translateX(.5px)}
+    100%{opacity:1;transform:translateX(0)}
+  }
+  @keyframes gl-flicker-tap{
+    0%  {opacity:0;transform:translateX(6px)}
+    10% {opacity:.85;transform:translateX(-1px)}
+    18% {opacity:.05;transform:translateX(2px)}
+    30% {opacity:.9;transform:translateX(0)}
+    50% {opacity:1;transform:translateX(0)}
+    80% {opacity:.95;transform:translateX(0)}
+    100%{opacity:0;transform:translateX(0)}
+  }
+  @media (min-width:769px){
+    .gl-badge:hover .gl-badge-text{
+      animation:gl-flicker-in .4s ease forwards;
+    }
+  }
+  .gl-badge.gl-active .gl-badge-text{
+    animation:gl-flicker-tap 1.2s ease forwards;
+  }
+  @media (max-width:768px){
+    .gl-badge-icon{width:32px;height:32px}
+    .gl-badge{top:12px;right:12px}
+  }
+
+  /* paste button row */
+  .paste-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:2px;
+  }
+  .paste-row button{font-size:12px;padding:7px 12px}
+  .paste-hint{font-size:11px;color:var(--ink-muted)}
 </style>
 </head>
 <body>
@@ -323,6 +400,11 @@
   </svg>
 </div>
 
+<div class="gl-badge" id="glBadge" aria-label="Glitch Labs">
+  <span class="gl-badge-text" aria-hidden="true"><span class="gl-text-g">GLITCH</span>&nbsp;<span class="gl-text-l">LABS</span></span>
+  <img class="gl-badge-icon" src="glitchlabs-icon.png" alt="Glitch Labs">
+</div>
+
 <div class="wrap">
   <header>
     <div class="eyebrow">Solana Hacker House · London</div>
@@ -340,6 +422,10 @@
           <div class="hint">JPG or PNG, square-ish photos crop best</div>
         </div>
         <input id="fileInput" type="file" accept="image/*">
+        <div class="paste-row">
+          <button type="button" class="ghost" id="pasteImgBtn">Paste image</button>
+          <span class="paste-hint">Tap after copying a photo</span>
+        </div>
       </div>
 
       <div class="field">
@@ -494,7 +580,7 @@
 
   function handleFile(file){
     if(!file.type.startsWith('image/')) return;
-    filenameEl.textContent = file.name;
+    filenameEl.textContent = file.name || 'Pasted image';
     var reader = new FileReader();
     reader.onload = function(e){
       var img = new Image();
@@ -876,6 +962,46 @@
   window.addEventListener('error', function(e){
     statusText.textContent = 'Error: ' + (e.message || 'unknown');
   });
+
+  // Paste image button — uses Clipboard API for mobile where Cmd/Ctrl+V isn't available
+  var pasteImgBtn = document.getElementById('pasteImgBtn');
+  if(pasteImgBtn){
+    pasteImgBtn.addEventListener('click', async function(){
+      try{
+        if(!navigator.clipboard || !navigator.clipboard.read){
+          statusText.textContent = "Clipboard paste isn't supported in this browser — use the Upload button instead.";
+          return;
+        }
+        var items = await navigator.clipboard.read();
+        var found = false;
+        for(var i=0;i<items.length;i++){
+          var imageType = items[i].types.find(function(t){ return t.startsWith('image/'); });
+          if(imageType){
+            var blob = await items[i].getType(imageType);
+            handleFile(blob);
+            found = true;
+            break;
+          }
+        }
+        if(!found){
+          statusText.textContent = 'No image found on the clipboard. Copy an image first, then try Paste again.';
+        }
+      }catch(err){
+        statusText.textContent = "Couldn't read the clipboard — your browser may need permission, or try the Upload button instead.";
+      }
+    });
+  }
+
+  // Glitch Labs badge — mobile tap triggers flicker-in/out animation
+  var glBadge = document.getElementById('glBadge');
+  if(glBadge){
+    glBadge.addEventListener('touchstart', function(){
+      glBadge.classList.remove('gl-active');
+      void glBadge.offsetWidth; // force reflow to restart animation
+      glBadge.classList.add('gl-active');
+      setTimeout(function(){ glBadge.classList.remove('gl-active'); }, 1200);
+    }, { passive: true });
+  }
 
   selectStyle(selectedStyle); // set initial active/disabled state to match the HTML default
 
