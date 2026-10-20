@@ -267,20 +267,15 @@
       <div class="field">
         <label>Style</label>
         <div class="style-picker" id="stylePicker" role="radiogroup" aria-label="Pick a style">
-          <button type="button" class="style-option active" data-style="neon-skyline" role="radio" aria-checked="true">
-            <span class="swatch swatch-skyline"></span>
-            <span class="style-name">Neon Skyline</span>
-            <span class="style-hint">Badge with name &amp; London skyline</span>
-          </button>
-          <button type="button" class="style-option" data-style="duotone-purple" role="radio" aria-checked="false">
+          <button type="button" class="style-option active" data-style="neon-skyline-purple" role="radio" aria-checked="true">
             <span class="swatch swatch-purple"></span>
-            <span class="style-name">Duotone Purple</span>
-            <span class="style-hint">Clean avatar, no text</span>
+            <span class="style-name">Neon Skyline Purple</span>
+            <span class="style-hint">Purple glitch skyline</span>
           </button>
-          <button type="button" class="style-option" data-style="duotone-green" role="radio" aria-checked="false">
+          <button type="button" class="style-option" data-style="neon-skyline-green" role="radio" aria-checked="false">
             <span class="swatch swatch-green"></span>
-            <span class="style-name">Duotone Green</span>
-            <span class="style-hint">Clean avatar, no text</span>
+            <span class="style-name">Neon Skyline Green</span>
+            <span class="style-hint">Green glitch skyline</span>
           </button>
         </div>
       </div>
@@ -332,17 +327,20 @@
   var uploadedDataUrl = null;   // same photo as a data: URL, sent to the AI endpoint
   var aiImg = null;             // the AI-generated duotone/glitch portrait, once it comes back
   var handle = 'MOONSURF';
+
+  var bp26Logo = new Image();
+  var bp26LogoLoaded = false;
+  bp26Logo.src = 'bp26-logo.png';
+  bp26Logo.onload = function(){ bp26LogoLoaded = true; draw(); };
   var generating = false;
 
-  // Three locked styles — must match the keys in api/generate.js's STYLES object.
-  // usesHandle: false means that template renders no text at all (see api/generate.js),
-  // so the handle field is disabled when picked, since it wouldn't do anything.
+  // Two locked styles — must match the keys in api/generate.js's STYLES object.
+  // Neither style uses a handle (model renders no text), so the handle field stays disabled.
   var STYLE_INFO = {
-    'neon-skyline':   { usesHandle: true },
-    'duotone-purple': { usesHandle: false },
-    'duotone-green':  { usesHandle: false }
+    'neon-skyline-purple': { usesHandle: false },
+    'neon-skyline-green':  { usesHandle: false }
   };
-  var selectedStyle = 'neon-skyline';
+  var selectedStyle = 'neon-skyline-purple';
 
   var fileInput = document.getElementById('fileInput');
   var dropzone = document.getElementById('dropzone');
@@ -736,12 +734,38 @@
     // instead of reading as a clean, untouched gradient border.
     drawGlitchRing(cx, cy, circleR);
 
-    // No code-drawn text or logo anymore: once aiImg exists, the model has already
-    // rendered the handle, "SOLANA BREAKPOINT 2026 · LONDON", and the Solana logomark
-    // directly into the image (see api/generate.js buildPrompt). Before that — while
-    // showing the placeholder or a freshly-uploaded, not-yet-generated photo — the
-    // canvas intentionally stays clean, since that text/logo would just be a fake
-    // preview of something only the AI pass actually produces.
+    // BP26 logo composited in code — pixel-identical every time, never sent to the model.
+    if(bp26LogoLoaded){
+      // Natural size is 520×96; scale so logo width = 38% of circle diameter.
+      var logoW = circleR * 2 * 0.38;
+      var logoH = logoW * (96 / 520);
+      var logoX = cx - logoW / 2;
+      // Vertically centered at cy - circleR*0.62 (upper safe zone of circle)
+      var logoY = (cy - circleR * 0.62) - logoH / 2;
+
+      // Dark backing pill for legibility against busy backgrounds
+      var padX = logoW * 0.18;
+      var padY = logoH * 0.45;
+      var pillX = logoX - padX;
+      var pillY = logoY - padY;
+      var pillW = logoW + padX * 2;
+      var pillH = logoH + padY * 2;
+      var pillR = pillH / 2;
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      ctx.beginPath();
+      ctx.moveTo(pillX + pillR, pillY);
+      ctx.arcTo(pillX + pillW, pillY, pillX + pillW, pillY + pillH, pillR);
+      ctx.arcTo(pillX + pillW, pillY + pillH, pillX, pillY + pillH, pillR);
+      ctx.arcTo(pillX, pillY + pillH, pillX, pillY, pillR);
+      ctx.arcTo(pillX, pillY, pillX + pillW, pillY, pillR);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      ctx.drawImage(bp26Logo, logoX, logoY, logoW, logoH);
+    }
   }
 
   function drawLetterSpaced(text, x, baselineY, size, weight, family, color, spacing){
