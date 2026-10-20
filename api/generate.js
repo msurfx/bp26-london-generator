@@ -19,29 +19,23 @@ export const config = {
 const STYLES = {
   "neon-skyline-purple": {
     label: "Neon Skyline Purple",
-    buildPrompt(handle) {
-      const handleBlock = handle
-        ? ` Near the bottom of the image, render the text "${handle}" in bold white, with the same block-shift glitch distortion and chromatic aberration as the rest of the scene — a few glitch block-slices crossing through the letterforms, consistent with the image's style. This square image will be cropped into a circle, and the circle is narrower near the very bottom edge, so keep this text starting no lower than about 78-80% down from the top, horizontally centered, no wider than about 65% of the image width, with every letter (including the first and last) fully visible and nowhere near the edge.`
-        : "";
+    buildPrompt() {
       return `Transform the attached portrait photo and place it into this scene: a cyberpunk-utopic-dystopian digital artwork background for Solana Breakpoint 2026 in London — a vibrant, bright, highly saturated Solana Purple (#9945FF) wash across the scene — punchy and electric, not dark, muted, dusty, or desaturated/grey-purple. The purple should read as vivid and glowing, like neon or UV light, clearly matching the exact hex #9945FF in brightness and saturation., large rectangular block-shift glitch distortion (blocky rectangular bands horizontally displaced from each other, hard-edged chromatic aberration/red-cyan fringing along slice edges), NOT a sparkle/pixel-dissolve/confetti effect.
 
 Include a dark London skyline silhouette behind the subject, partially visible through the glitch blocks — feature the Shard and the Gherkin, large and recognizable.
 
-Keep the person's face, features, and likeness clearly recognizable — do not change their identity. Apply the same block-shift glitch distortion and purple color treatment to the subject's portrait itself, so they look like part of the same glitched scene, not a separate clean layer pasted on top — a few glitch block-slices crossing over the subject, consistent chromatic aberration, so subject and background read as one unified piece.${handleBlock} Do not include any logo, logomark, wordmark, or other text anywhere else in the image beyond what's described above. Crop into a clean circle with no border, stroke, or ring. Square 1:1 aspect ratio, high resolution.`;
+Keep the person's face, features, and likeness clearly recognizable — do not change their identity. Apply the same block-shift glitch distortion and purple color treatment to the subject's portrait itself, so they look like part of the same glitched scene, not a separate clean layer pasted on top — a few glitch block-slices crossing over the subject, consistent chromatic aberration, so subject and background read as one unified piece. CRITICAL: do not render any text, words, letters, numbers, titles, wordmarks, or logos anywhere in this image. Specifically do NOT write the words "Solana", "Breakpoint", "London", "2026", or any event name or date — leave the entire background completely free of any lettering of any kind. This is a plain glitched purple skyline scene with only the subject in it — no text layer at all, under any circumstances. Crop into a clean circle with no border, stroke, or ring. Square 1:1 aspect ratio, high resolution.`;
     },
   },
 
   "neon-skyline-green": {
     label: "Neon Skyline Green",
-    buildPrompt(handle) {
-      const handleBlock = handle
-        ? ` Near the bottom of the image, render the text "${handle}" in bold white, with the same block-shift glitch distortion and chromatic aberration as the rest of the scene — a few glitch block-slices crossing through the letterforms, consistent with the image's style. This square image will be cropped into a circle, and the circle is narrower near the very bottom edge, so keep this text starting no lower than about 78-80% down from the top, horizontally centered, no wider than about 65% of the image width, with every letter (including the first and last) fully visible and nowhere near the edge.`
-        : "";
+    buildPrompt() {
       return `Transform the attached portrait photo and place it into this scene: a cyberpunk-utopic-dystopian digital artwork background for Solana Breakpoint 2026 in London — a bold Solana Green (#14F195) wash across the scene, large rectangular block-shift glitch distortion (blocky rectangular bands horizontally displaced from each other, hard-edged chromatic aberration/red-cyan fringing along slice edges), NOT a sparkle/pixel-dissolve/confetti effect.
 
 Include a dark London skyline silhouette behind the subject, partially visible through the glitch blocks — feature the Shard and the Gherkin, large and recognizable.
 
-Keep the person's face, features, and likeness clearly recognizable — do not change their identity. Apply the same block-shift glitch distortion and green color treatment to the subject's portrait itself, so they look like part of the same glitched scene, not a separate clean layer pasted on top.${handleBlock} Do not include any logo, logomark, wordmark, or other text anywhere else in the image beyond what's described above. Crop into a clean circle with no border, stroke, or ring. Square 1:1 aspect ratio, high resolution.`;
+Keep the person's face, features, and likeness clearly recognizable — do not change their identity. Apply the same block-shift glitch distortion and green color treatment to the subject's portrait itself, so they look like part of the same glitched scene, not a separate clean layer pasted on top. CRITICAL: do not render any text, words, letters, numbers, titles, wordmarks, or logos anywhere in this image. Specifically do NOT write the words "Solana", "Breakpoint", "London", "2026", or any event name or date — leave the entire background completely free of any lettering of any kind. This is a plain glitched green skyline scene with only the subject in it — no text layer at all, under any circumstances. Crop into a clean circle with no border, stroke, or ring. Square 1:1 aspect ratio, high resolution.`;
     },
   },
 };
@@ -83,7 +77,7 @@ export default async function handler(req, res) {
     const model = "gemini-2.5-flash-image";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const promptText = styleConfig.buildPrompt(safeHandle);
+    const promptText = styleConfig.buildPrompt();
 
     const response = await fetch(url, {
       method: "POST",

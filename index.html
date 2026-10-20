@@ -741,6 +741,35 @@
 
       ctx.drawImage(bp26Logo, logoX, logoY, logoW, logoH);
     }
+
+    // Handle text composited in code — chromatic-aberration glitch treatment, mirrors logo position near bottom.
+    var displayHandle = handle.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 16);
+    if(displayHandle.length > 0){
+      var fontSize = circleR * 0.11;
+      var maxTextW = circleR * 2 * 0.70;
+      ctx.save();
+      ctx.font = '700 ' + fontSize + 'px "Rajdhani", "Arial Narrow", Arial, sans-serif';
+      var textW = ctx.measureText(displayHandle).width;
+      if(textW > maxTextW){
+        fontSize *= maxTextW / textW;
+        ctx.font = '700 ' + fontSize + 'px "Rajdhani", "Arial Narrow", Arial, sans-serif';
+      }
+      var textY = cy + circleR * 0.80;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // cyan ghost (left/up)
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = 'rgba(0,255,255,1)';
+      ctx.fillText(displayHandle, cx - 2, textY - 2);
+      // magenta ghost (right/down)
+      ctx.fillStyle = 'rgba(255,0,100,1)';
+      ctx.fillText(displayHandle, cx + 2, textY + 2);
+      // solid white on top
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(displayHandle, cx, textY);
+      ctx.restore();
+    }
   }
 
   function drawLetterSpaced(text, x, baselineY, size, weight, family, color, spacing){
