@@ -20,7 +20,7 @@ const STYLES = {
     label: "Neon Skyline Purple",
     usesHandle: false,
     buildPrompt() {
-      return `Transform the attached portrait photo and place it into this scene: a cyberpunk-utopic-dystopian digital artwork background for Solana Breakpoint 2026 in London — a bold Solana Purple (#9945FF) wash across the scene, large rectangular block-shift glitch distortion (blocky rectangular bands horizontally displaced from each other, hard-edged chromatic aberration/red-cyan fringing along slice edges), NOT a sparkle/pixel-dissolve/confetti effect.
+      return `Transform the attached portrait photo and place it into this scene: a cyberpunk-utopic-dystopian digital artwork background for Solana Breakpoint 2026 in London — a vibrant, bright, highly saturated Solana Purple (#9945FF) wash across the scene — punchy and electric, not dark, muted, dusty, or desaturated/grey-purple. The purple should read as vivid and glowing, like neon or UV light, clearly matching the exact hex #9945FF in brightness and saturation., large rectangular block-shift glitch distortion (blocky rectangular bands horizontally displaced from each other, hard-edged chromatic aberration/red-cyan fringing along slice edges), NOT a sparkle/pixel-dissolve/confetti effect.
 
 Include a dark London skyline silhouette behind the subject, partially visible through the glitch blocks — feature the Shard and the Gherkin, large and recognizable.
 
