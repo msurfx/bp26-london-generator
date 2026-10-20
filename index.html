@@ -26,15 +26,26 @@
     color-scheme:dark;
   }
   *{box-sizing:border-box}
+  html{min-height:100vh}
   body{
-    background:var(--bg);
+    background:linear-gradient(160deg,#1b0f33 0%,#0a0612 60%,#06050a 100%);
     color:var(--ink);
     font-family:var(--font-body);
     padding-inline:20px;
     padding-block:28px;
-    min-height:100%;
+    min-height:100vh;
   }
-  .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+  .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px;position:relative;z-index:1}
+
+  /* decorative skyline silhouette fixed at viewport bottom */
+  .skyline-silhouette{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    height:180px;
+    pointer-events:none;
+    z-index:0;
+    opacity:0.18;
+  }
 
   header{display:flex;flex-direction:column;gap:4px;text-align:center}
   .eyebrow{
@@ -57,6 +68,32 @@
     background-clip:text;
     color:transparent;
     text-wrap:balance;
+    position:relative;
+  }
+  h1::before,h1::after{
+    content:attr(data-text);
+    position:absolute;
+    inset:0;
+    font:inherit;
+    text-transform:uppercase;
+    letter-spacing:inherit;
+    text-wrap:balance;
+    background:none;
+    -webkit-background-clip:unset;
+    background-clip:unset;
+    pointer-events:none;
+  }
+  h1::before{
+    color:var(--cyan);
+    transform:translate(-1px,-1px);
+    opacity:0.38;
+    mix-blend-mode:screen;
+  }
+  h1::after{
+    color:var(--magenta);
+    transform:translate(1px,1px);
+    opacity:0.32;
+    mix-blend-mode:screen;
   }
   .sub{color:var(--ink-muted);font-size:14px;max-width:46ch;margin:4px auto 0}
 
@@ -232,17 +269,64 @@
   .save-steps p{margin:0;font-size:13px;color:var(--ink-muted);line-height:1.5}
   .save-steps .row{display:flex;gap:10px;flex-wrap:wrap}
 
-  footer{text-align:center;color:var(--ink-muted);font-size:12px}
-  footer a{color:var(--ink-muted)}
+  footer{text-align:center;color:var(--ink-muted);font-size:12px;display:flex;flex-direction:column;gap:6px}
+  footer a{color:var(--ink-muted);text-decoration:none}
+  footer a:hover{color:var(--ink)}
+  .footer-credit{font-family:var(--font-ui);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#5a4a7a}
+  .footer-credit a{color:#5a4a7a}
+  .footer-credit a:hover{color:var(--purple)}
 </style>
 </head>
 <body>
 
+<!-- decorative skyline silhouette — Glitch Labs chrome, not part of the pfp -->
+<div class="skyline-silhouette" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 180" preserveAspectRatio="xMidYMax slice" width="100%" height="100%">
+    <g fill="#4a1a8a">
+      <!-- left cluster -->
+      <rect x="0" y="140" width="55" height="40"/>
+      <rect x="60" y="120" width="40" height="60"/>
+      <rect x="105" y="132" width="50" height="48"/>
+      <rect x="160" y="108" width="38" height="72"/>
+      <rect x="203" y="125" width="48" height="55"/>
+      <!-- Big Ben stub -->
+      <rect x="256" y="90" width="24" height="90"/>
+      <polygon points="256,90 268,65 280,90"/>
+      <rect x="284" y="130" width="44" height="50"/>
+      <!-- mid-left -->
+      <rect x="333" y="118" width="58" height="62"/>
+      <rect x="396" y="105" width="48" height="75"/>
+      <rect x="449" y="128" width="36" height="52"/>
+      <rect x="490" y="112" width="62" height="68"/>
+      <rect x="557" y="135" width="40" height="45"/>
+      <!-- The Shard -->
+      <polygon points="612,4 596,180 628,180"/>
+      <!-- mid-right -->
+      <rect x="636" y="122" width="52" height="58"/>
+      <rect x="693" y="138" width="42" height="42"/>
+      <rect x="740" y="110" width="60" height="70"/>
+      <rect x="805" y="130" width="46" height="50"/>
+      <!-- The Gherkin -->
+      <rect x="858" y="105" width="42" height="75"/>
+      <ellipse cx="879" cy="106" rx="21" ry="16"/>
+      <!-- right cluster -->
+      <rect x="906" y="128" width="52" height="52"/>
+      <rect x="963" y="115" width="44" height="65"/>
+      <rect x="1012" y="135" width="58" height="45"/>
+      <rect x="1075" y="118" width="48" height="62"/>
+      <rect x="1128" y="130" width="40" height="50"/>
+      <rect x="1173" y="108" width="62" height="72"/>
+      <rect x="1240" y="125" width="45" height="55"/>
+      <rect x="1290" y="140" width="55" height="40"/>
+      <rect x="1350" y="132" width="50" height="48"/>
+    </g>
+  </svg>
+</div>
 
 <div class="wrap">
   <header>
     <div class="eyebrow">Solana Hacker House · London</div>
-    <h1>BP26 London Generator</h1>
+    <h1 data-text="BP26 London Generator">BP26 London Generator</h1>
     <p class="sub">Upload a photo, drop in your handle, and get a cyberpunk-utopic Breakpoint 2026 pfp — ready for X.</p>
   </header>
 
@@ -301,7 +385,10 @@
     </div>
   </div>
 
-  <footer>Fan-made for Breakpoint 2026 · London. Not an official Solana Foundation product.</footer>
+  <footer>
+    <span>Fan-made for Breakpoint 2026 · London. Not an official Solana Foundation product.</span>
+    <span class="footer-credit">Developed by <a href="https://x.com/Glitchlabsinc" target="_blank" rel="noopener">Glitch Labs</a></span>
+  </footer>
 </div>
 
 <script>
