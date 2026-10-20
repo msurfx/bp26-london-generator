@@ -276,71 +276,55 @@
   .footer-credit a{color:#5a4a7a}
   .footer-credit a:hover{color:var(--purple)}
 
-  /* Glitch Labs fixed corner badge */
-  .gl-badge{
+  /* Glitch Labs ambient background decorations — atmospheric branding, not interactive */
+  .gl-ambient{
     position:fixed;
-    top:16px;right:16px;
-    z-index:100;
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .gl-badge-icon{
-    width:40px;height:40px;
-    border-radius:8px;
-    opacity:0.85;
-    cursor:pointer;
-    flex:none;
-    display:block;
-    transition:opacity .15s;
-  }
-  .gl-badge:hover .gl-badge-icon,.gl-badge:active .gl-badge-icon{opacity:1}
-  .gl-badge-text{
-    font-family:var(--font-ui);
-    font-weight:700;
-    font-size:11px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    white-space:nowrap;
-    opacity:0;
     pointer-events:none;
+    z-index:0;
     user-select:none;
+    border-radius:18%;
   }
-  .gl-text-g{
-    background:linear-gradient(90deg,var(--magenta),var(--purple) 50%,var(--green));
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
+  .gl-ambient-left{
+    top:8%;
+    left:-60px;
+    width:360px;
+    opacity:0.11;
+    animation:gl-drift-left 28s ease-in-out infinite;
   }
-  .gl-text-l{color:#fff}
-  @keyframes gl-flicker-in{
-    0%  {opacity:0;transform:translateX(6px)}
-    12% {opacity:.85;transform:translateX(-1px)}
-    22% {opacity:.05;transform:translateX(2px)}
-    38% {opacity:.9;transform:translateX(-.5px)}
-    55% {opacity:.3;transform:translateX(.5px)}
-    100%{opacity:1;transform:translateX(0)}
+  .gl-ambient-right{
+    top:28%;
+    right:-70px;
+    width:420px;
+    opacity:0.09;
+    animation:gl-drift-right 34s ease-in-out infinite;
+    animation-delay:-13s;
   }
-  @keyframes gl-flicker-tap{
-    0%  {opacity:0;transform:translateX(6px)}
-    10% {opacity:.85;transform:translateX(-1px)}
-    18% {opacity:.05;transform:translateX(2px)}
-    30% {opacity:.9;transform:translateX(0)}
-    50% {opacity:1;transform:translateX(0)}
-    80% {opacity:.95;transform:translateX(0)}
-    100%{opacity:0;transform:translateX(0)}
+  @keyframes gl-drift-left{
+    0%  {transform:translate(0px,0px) rotate(-2deg);    filter:none;            opacity:0.11}
+    20% {transform:translate(14px,-20px) rotate(1deg);  filter:none;            opacity:0.11}
+    35% {transform:translate(20px,-28px) rotate(2deg);  filter:none;            opacity:0.11}
+    36% {transform:translate(21px,-29px) rotate(2deg) skewX(5deg);  filter:hue-rotate(80deg);   opacity:0.26}
+    37% {transform:translate(19px,-27px) rotate(2deg) skewX(-3deg); filter:hue-rotate(-25deg);  opacity:0.04}
+    38% {transform:translate(20px,-28px) rotate(2deg);  filter:none;            opacity:0.11}
+    62% {transform:translate(10px,6px) rotate(-1deg);   filter:none;            opacity:0.11}
+    74% {transform:translate(22px,8px) rotate(3deg);    filter:none;            opacity:0.11}
+    75% {transform:translate(23px,9px) rotate(3deg) skewX(-4deg);  filter:hue-rotate(110deg);  opacity:0.22}
+    76% {transform:translate(21px,7px) rotate(3deg) skewX(2deg);   filter:hue-rotate(-45deg);  opacity:0.03}
+    77% {transform:translate(22px,8px) rotate(3deg);    filter:none;            opacity:0.11}
+    100%{transform:translate(0px,0px) rotate(-2deg);    filter:none;            opacity:0.11}
   }
-  @media (min-width:769px){
-    .gl-badge:hover .gl-badge-text{
-      animation:gl-flicker-in .4s ease forwards;
-    }
-  }
-  .gl-badge.gl-active .gl-badge-text{
-    animation:gl-flicker-tap 1.2s ease forwards;
+  @keyframes gl-drift-right{
+    0%  {transform:translate(0px,0px) rotate(4deg);       filter:none;            opacity:0.09}
+    38% {transform:translate(-20px,24px) rotate(-1deg);   filter:none;            opacity:0.09}
+    53% {transform:translate(-24px,32px) rotate(-3deg);   filter:none;            opacity:0.09}
+    54% {transform:translate(-25px,33px) rotate(-3deg) skewX(-5deg); filter:hue-rotate(65deg);  opacity:0.23}
+    55% {transform:translate(-23px,31px) rotate(-3deg) skewX(3deg);  filter:hue-rotate(-55deg); opacity:0.03}
+    56% {transform:translate(-24px,32px) rotate(-3deg);   filter:none;            opacity:0.09}
+    82% {transform:translate(-8px,12px) rotate(2deg);     filter:none;            opacity:0.09}
+    100%{transform:translate(0px,0px) rotate(4deg);       filter:none;            opacity:0.09}
   }
   @media (max-width:768px){
-    .gl-badge-icon{width:32px;height:32px}
-    .gl-badge{top:12px;right:12px}
+    .gl-ambient{display:none}
   }
 
   /* paste button row */
@@ -400,10 +384,9 @@
   </svg>
 </div>
 
-<div class="gl-badge" id="glBadge" aria-label="Glitch Labs">
-  <span class="gl-badge-text" aria-hidden="true"><span class="gl-text-g">GLITCH</span>&nbsp;<span class="gl-text-l">LABS</span></span>
-  <img class="gl-badge-icon" src="glitchlabs-icon.png" alt="Glitch Labs">
-</div>
+<!-- Glitch Labs ambient background decorations — atmospheric only, not interactive -->
+<img class="gl-ambient gl-ambient-left" src="glitchlabs-icon.png" alt="" aria-hidden="true">
+<img class="gl-ambient gl-ambient-right" src="glitchlabs-icon.png" alt="" aria-hidden="true">
 
 <div class="wrap">
   <header>
@@ -990,17 +973,6 @@
         statusText.textContent = "Couldn't read the clipboard — your browser may need permission, or try the Upload button instead.";
       }
     });
-  }
-
-  // Glitch Labs badge — mobile tap triggers flicker-in/out animation
-  var glBadge = document.getElementById('glBadge');
-  if(glBadge){
-    glBadge.addEventListener('touchstart', function(){
-      glBadge.classList.remove('gl-active');
-      void glBadge.offsetWidth; // force reflow to restart animation
-      glBadge.classList.add('gl-active');
-      setTimeout(function(){ glBadge.classList.remove('gl-active'); }, 1200);
-    }, { passive: true });
   }
 
   selectStyle(selectedStyle); // set initial active/disabled state to match the HTML default
