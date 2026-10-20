@@ -35,7 +35,7 @@
     padding-block:28px;
     min-height:100vh;
   }
-  .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px;position:relative;z-index:1}
+  .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px;position:relative;z-index:3}
 
   /* decorative skyline silhouette fixed at viewport bottom */
   .skyline-silhouette{
@@ -43,7 +43,7 @@
     bottom:0;left:0;right:0;
     height:180px;
     pointer-events:none;
-    z-index:0;
+    z-index:2;
     opacity:0.18;
   }
 
@@ -96,6 +96,31 @@
     mix-blend-mode:screen;
   }
   .sub{color:var(--ink-muted);font-size:14px;max-width:46ch;margin:4px auto 0}
+
+  .gl-stamp{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    text-decoration:none;
+    margin:6px auto 0;
+  }
+  .gl-stamp-label{
+    font-family:var(--font-ui);
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+  }
+  .gl-stamp-wordmark{
+    height:24px;
+    width:auto;
+    border-radius:5px;
+    vertical-align:middle;
+    opacity:0.9;
+    transition:opacity .15s;
+  }
+  .gl-stamp:hover .gl-stamp-wordmark{opacity:1}
 
   .app{
     display:grid;
@@ -280,7 +305,7 @@
   .gl-ambient{
     position:fixed;
     pointer-events:none;
-    z-index:0;
+    z-index:1;
     user-select:none;
     border-radius:18%;
   }
@@ -288,40 +313,38 @@
     top:8%;
     left:-20px;
     width:380px;
-    opacity:0.65;
     animation:gl-drift-left 28s ease-in-out infinite;
   }
   .gl-ambient-right{
     top:28%;
     right:-20px;
     width:400px;
-    opacity:0.62;
     animation:gl-drift-right 34s ease-in-out infinite;
     animation-delay:-13s;
   }
   @keyframes gl-drift-left{
-    0%  {transform:translate(0px,0px) rotate(-2deg);    filter:none;            opacity:0.11}
-    20% {transform:translate(14px,-20px) rotate(1deg);  filter:none;            opacity:0.11}
-    35% {transform:translate(20px,-28px) rotate(2deg);  filter:none;            opacity:0.11}
-    36% {transform:translate(21px,-29px) rotate(2deg) skewX(5deg);  filter:hue-rotate(80deg);   opacity:0.26}
-    37% {transform:translate(19px,-27px) rotate(2deg) skewX(-3deg); filter:hue-rotate(-25deg);  opacity:0.04}
-    38% {transform:translate(20px,-28px) rotate(2deg);  filter:none;            opacity:0.11}
-    62% {transform:translate(10px,6px) rotate(-1deg);   filter:none;            opacity:0.11}
-    74% {transform:translate(22px,8px) rotate(3deg);    filter:none;            opacity:0.11}
-    75% {transform:translate(23px,9px) rotate(3deg) skewX(-4deg);  filter:hue-rotate(110deg);  opacity:0.22}
-    76% {transform:translate(21px,7px) rotate(3deg) skewX(2deg);   filter:hue-rotate(-45deg);  opacity:0.03}
-    77% {transform:translate(22px,8px) rotate(3deg);    filter:none;            opacity:0.11}
-    100%{transform:translate(0px,0px) rotate(-2deg);    filter:none;            opacity:0.11}
+    0%  {transform:translate(0px,0px) rotate(-2deg);    filter:none;            opacity:0.88}
+    20% {transform:translate(14px,-20px) rotate(1deg);  filter:none;            opacity:0.88}
+    35% {transform:translate(20px,-28px) rotate(2deg);  filter:none;            opacity:0.88}
+    36% {transform:translate(21px,-29px) rotate(2deg) skewX(5deg);  filter:hue-rotate(80deg);   opacity:1.0}
+    37% {transform:translate(19px,-27px) rotate(2deg) skewX(-3deg); filter:hue-rotate(-25deg);  opacity:0.30}
+    38% {transform:translate(20px,-28px) rotate(2deg);  filter:none;            opacity:0.88}
+    62% {transform:translate(10px,6px) rotate(-1deg);   filter:none;            opacity:0.88}
+    74% {transform:translate(22px,8px) rotate(3deg);    filter:none;            opacity:0.88}
+    75% {transform:translate(23px,9px) rotate(3deg) skewX(-4deg);  filter:hue-rotate(110deg);  opacity:1.0}
+    76% {transform:translate(21px,7px) rotate(3deg) skewX(2deg);   filter:hue-rotate(-45deg);  opacity:0.25}
+    77% {transform:translate(22px,8px) rotate(3deg);    filter:none;            opacity:0.88}
+    100%{transform:translate(0px,0px) rotate(-2deg);    filter:none;            opacity:0.88}
   }
   @keyframes gl-drift-right{
-    0%  {transform:translate(0px,0px) rotate(4deg);       filter:none;            opacity:0.09}
-    38% {transform:translate(-20px,24px) rotate(-1deg);   filter:none;            opacity:0.09}
-    53% {transform:translate(-24px,32px) rotate(-3deg);   filter:none;            opacity:0.09}
-    54% {transform:translate(-25px,33px) rotate(-3deg) skewX(-5deg); filter:hue-rotate(65deg);  opacity:0.23}
-    55% {transform:translate(-23px,31px) rotate(-3deg) skewX(3deg);  filter:hue-rotate(-55deg); opacity:0.03}
-    56% {transform:translate(-24px,32px) rotate(-3deg);   filter:none;            opacity:0.09}
-    82% {transform:translate(-8px,12px) rotate(2deg);     filter:none;            opacity:0.09}
-    100%{transform:translate(0px,0px) rotate(4deg);       filter:none;            opacity:0.09}
+    0%  {transform:translate(0px,0px) rotate(4deg);       filter:none;            opacity:0.85}
+    38% {transform:translate(-20px,24px) rotate(-1deg);   filter:none;            opacity:0.85}
+    53% {transform:translate(-24px,32px) rotate(-3deg);   filter:none;            opacity:0.85}
+    54% {transform:translate(-25px,33px) rotate(-3deg) skewX(-5deg); filter:hue-rotate(65deg);  opacity:1.0}
+    55% {transform:translate(-23px,31px) rotate(-3deg) skewX(3deg);  filter:hue-rotate(-55deg); opacity:0.28}
+    56% {transform:translate(-24px,32px) rotate(-3deg);   filter:none;            opacity:0.85}
+    82% {transform:translate(-8px,12px) rotate(2deg);     filter:none;            opacity:0.85}
+    100%{transform:translate(0px,0px) rotate(4deg);       filter:none;            opacity:0.85}
   }
   @media (max-width:768px){
     .gl-ambient-right{display:none}
@@ -330,7 +353,6 @@
       top:4%;
       left:50%;
       transform:translateX(-50%);
-      opacity:0.60;
     }
   }
 
@@ -399,6 +421,10 @@
   <header>
     <div class="eyebrow">Solana Hacker House · London</div>
     <h1 data-text="BP26 London Generator">BP26 London Generator</h1>
+    <a href="https://x.com/Glitchlabsinc" target="_blank" rel="noopener" class="gl-stamp">
+      <span class="gl-stamp-label">Design by</span>
+      <img class="gl-stamp-wordmark" src="glitchlabs-wordmark.png" alt="Glitch Labs">
+    </a>
     <p class="sub">Upload a photo, drop in your handle, and get a cyberpunk-utopic Breakpoint 2026 pfp — ready for X.</p>
   </header>
 
