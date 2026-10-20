@@ -260,8 +260,8 @@
 
       <div class="field">
         <label for="handleInput">Your handle</label>
-        <input id="handleInput" class="text-input" type="text" maxlength="16" placeholder="e.g. MOONSURF" value="MOONSURF">
-        <div class="char-count"><span id="charCount">9</span>/16</div>
+        <input id="handleInput" class="text-input" type="text" maxlength="16" placeholder="Your handle (optional)">
+        <div class="char-count"><span id="charCount">0</span>/16</div>
       </div>
 
       <div class="field">
@@ -326,7 +326,7 @@
   var uploadedImg = null;       // the raw photo the user picked, shown instantly as a preview
   var uploadedDataUrl = null;   // same photo as a data: URL, sent to the AI endpoint
   var aiImg = null;             // the AI-generated duotone/glitch portrait, once it comes back
-  var handle = 'MOONSURF';
+  var handle = '';
 
   var bp26Logo = new Image();
   var bp26LogoLoaded = false;
@@ -335,10 +335,9 @@
   var generating = false;
 
   // Two locked styles — must match the keys in api/generate.js's STYLES object.
-  // Neither style uses a handle (model renders no text), so the handle field stays disabled.
   var STYLE_INFO = {
-    'neon-skyline-purple': { usesHandle: false },
-    'neon-skyline-green':  { usesHandle: false }
+    'neon-skyline-purple': {},
+    'neon-skyline-green':  {}
   };
   var selectedStyle = 'neon-skyline-purple';
 
@@ -362,9 +361,6 @@
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-checked', active ? 'true' : 'false');
     });
-    var usesHandle = STYLE_INFO[styleKey].usesHandle;
-    handleInput.disabled = !usesHandle;
-    handleInput.parentElement.style.opacity = usesHandle ? '1' : '0.5';
   }
 
   styleOptions.forEach(function(btn){
@@ -434,7 +430,7 @@
 
   generateBtn.addEventListener('click', async function(){
     if(generating) return;
-    handle = handleInput.value.trim() || 'MOONSURF';
+    handle = handleInput.value.trim();
 
     if(!uploadedDataUrl){
       // no photo yet — just render the placeholder template with the handle
@@ -492,9 +488,9 @@
     uploadedImg = null;
     uploadedDataUrl = null;
     aiImg = null;
-    handleInput.value = 'MOONSURF';
-    handle = 'MOONSURF';
-    charCount.textContent = '9';
+    handleInput.value = '';
+    handle = '';
+    charCount.textContent = '0';
     filenameEl.textContent = 'Tap to choose a photo';
     statusText.textContent = 'Showing example — upload your photo above';
     draw();
