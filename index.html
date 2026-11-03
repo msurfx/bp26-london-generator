@@ -356,15 +356,20 @@
     }
   }
 
-  /* paste button row */
+  /* upload + paste button row */
   .paste-row{
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:8px;
     margin-top:2px;
+    flex-wrap:wrap;
   }
   .paste-row button{font-size:12px;padding:7px 12px}
   .paste-hint{font-size:11px;color:var(--ink-muted)}
+  @media(max-width:760px){
+    #uploadImgBtn{width:100%;font-size:14px;padding:11px;font-weight:700}
+    #pasteImgBtn,.paste-hint{display:none}
+  }
 </style>
 </head>
 <body>
@@ -434,13 +439,14 @@
         <label for="fileInput">Your photo</label>
         <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload your photo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5M7 9l5-5 5 5M12 4v12"/></svg>
-          <div class="filename" id="filename">Tap to choose, or paste (Ctrl/Cmd+V)</div>
+          <div class="filename" id="filename">Drag & drop, or tap to upload</div>
           <div class="hint">JPG or PNG, square-ish photos crop best</div>
         </div>
         <input id="fileInput" type="file" accept="image/*">
         <div class="paste-row">
+          <button type="button" class="ghost" id="uploadImgBtn">Upload image</button>
           <button type="button" class="ghost" id="pasteImgBtn">Paste image</button>
-          <span class="paste-hint">Tap after copying a photo</span>
+          <span class="paste-hint">Desktop: after copying a photo</span>
         </div>
       </div>
 
@@ -591,7 +597,7 @@
 
   // focusing the dropzone and pasting feels most natural, so hint at it visually
   dropzone.addEventListener('focus', function(){
-    statusText.textContent = 'Ready to paste — Ctrl/Cmd+V, or click to choose a file';
+    statusText.textContent = 'Click to choose a file, drag & drop, or use the Upload button below';
   });
 
   function handleFile(file){
@@ -680,7 +686,7 @@
     handleInput.value = '';
     handle = '';
     charCount.textContent = '0';
-    filenameEl.textContent = 'Tap to choose a photo';
+    filenameEl.textContent = 'Drag & drop, or tap to upload';
     statusText.textContent = 'Showing example — upload your photo above';
     draw();
   });
@@ -979,7 +985,11 @@
     statusText.textContent = 'Error: ' + (e.message || 'unknown');
   });
 
-  // Paste image button — uses Clipboard API for mobile where Cmd/Ctrl+V isn't available
+  // Upload image button — works everywhere including iOS Safari and cross-origin iframes
+  var uploadImgBtn = document.getElementById('uploadImgBtn');
+  if(uploadImgBtn){ uploadImgBtn.addEventListener('click', function(){ fileInput.click(); }); }
+
+  // Paste image button — uses Clipboard API for desktop where Cmd/Ctrl+V is available
   var pasteImgBtn = document.getElementById('pasteImgBtn');
   if(pasteImgBtn){
     pasteImgBtn.addEventListener('click', async function(){
